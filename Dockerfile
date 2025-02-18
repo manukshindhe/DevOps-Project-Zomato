@@ -1,23 +1,27 @@
-# Use Node.js 16 slim as the base image
-FROM node:16-slim
+# Use a full-featured image with build tools
+FROM node:16
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
+# Install necessary system dependencies (helps fix errors)
+RUN apt-get update && apt-get install -y python3 g++ make
+
+# Copy package.json and install dependencies
 COPY package*.json ./
+RUN npm install --legacy-peer-deps
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code
+# Copy the rest of the application
 COPY . .
+
+# Increase available memory for Node.js
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 # Build the React app
 RUN npm run build
 
-# Expose port 3000 (or the port your app is configured to listen on)
+# Expose the port
 EXPOSE 3000
 
-# Start your Node.js server (assuming it serves the React app)  
-CMD ["npm", "start"]
+# Use a lightweight server to serve the built React app
+CMD ["npx", "serve", "-s", "build", "-l", "3000"]
