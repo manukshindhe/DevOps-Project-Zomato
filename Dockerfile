@@ -1,21 +1,23 @@
-# Use a full-featured image with build tools
-FROM node:16
+# Use a full-featured Node.js image with build tools
+FROM node:18
 
 # Set working directory
 WORKDIR /app
 
-# Install necessary system dependencies (helps fix errors)
+# Install necessary system dependencies
 RUN apt-get update && apt-get install -y python3 g++ make
 
-# Copy package.json and install dependencies
+# Copy package.json and package-lock.json first for caching
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+
+# Ensure clean install of dependencies
+RUN npm install --legacy-peer-deps && npm audit fix || true
 
 # Copy the rest of the application
 COPY . .
 
 # Increase available memory for Node.js
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 # Build the React app
 RUN npm run build
